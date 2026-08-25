@@ -12,40 +12,53 @@ app.use(express.json());
 
 // API Routes
 app.get("/api/avisos", async (req, res) => {
-  const avisos = await getAvisos();
-  res.json(avisos);
+  try {
+    const avisos = await getAvisos();
+    res.json(avisos);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch avisos" });
+  }
 });
 
 app.get("/api/rss", async (req, res) => {
-  const feed = await generateRSS();
-  res.type('application/xml');
-  res.send(feed.rss2());
+  try {
+    const feed = await generateRSS();
+    res.type('application/xml');
+    res.send(feed.rss2());
+  } catch (error) {
+    res.status(500).json({ error: "Failed to generate RSS" });
+  }
 });
 
 app.get("/api/atom", async (req, res) => {
-  const feed = await generateRSS();
-  res.type('application/atom+xml');
-  res.send(feed.atom1());
+  try {
+    const feed = await generateRSS();
+    res.type('application/atom+xml');
+    res.send(feed.atom1());
+  } catch (error) {
+    res.status(500).json({ error: "Failed to generate Atom" });
+  }
 });
 
-async function startServer() {
-  if (process.env.NODE_ENV !== "production") {
+const distPath = path.join(process.cwd(), 'dist');
+app.use(express.static(distPath));
+app.get('*', (req, res) => {
+  res.sendFile(path.join(distPath, 'index.html'));
+});
+
+if (process.env.NODE_ENV !== "production" && !process.env.VERCEL) {
+  async function startDevServer() {
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
     });
     app.use(vite.middlewares);
-  } else {
-    const distPath = path.join(process.cwd(), 'dist');
-    app.use(express.static(distPath));
-    app.get('*', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
+
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log(`Server running on port ${PORT}`);
     });
   }
-
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server running on port ${PORT}`);
-  });
+  startDevServer();
 }
 
-startServer();
+export default app;
