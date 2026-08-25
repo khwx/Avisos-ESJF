@@ -1,0 +1,6 @@
+{
+  "name": "Avisos ESJF",
+  "description": "Uma plataforma que consome os avisos da Escola Secundária José Falcão, fornecendo notificações em tempo real e um feed RSS.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
