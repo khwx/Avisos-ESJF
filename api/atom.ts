@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { generateRSS } from './_lib/scraper';
+import { generateRSS } from './lib/scraper';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
