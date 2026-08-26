@@ -4,7 +4,7 @@
  */
 
 import { useEffect, useState, useRef } from "react";
-import { Bell, BellRing, Rss, ExternalLink, Calendar, RefreshCcw, Moon, Sun, Search, X } from "lucide-react";
+import { Bell, BellRing, Rss, ExternalLink, Calendar, RefreshCcw, Moon, Sun, Search, X, CheckCircle, Circle } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 
 interface Aviso {
@@ -42,6 +42,19 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("Todas");
   const [toast, setToast] = useState<{ id: number, message: string } | null>(null);
+  
+  const [readAvisos, setReadAvisos] = useState<Set<string>>(() => {
+    try {
+      const saved = localStorage.getItem('readAvisos');
+      return saved ? new Set(JSON.parse(saved)) : new Set();
+    } catch {
+      return new Set();
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem('readAvisos', JSON.stringify(Array.from(readAvisos)));
+  }, [readAvisos]);
   
   // Notification state
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
@@ -218,6 +231,18 @@ export default function App() {
     }
   };
 
+  const toggleReadStatus = (id: string) => {
+    setReadAvisos(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
   const filteredAvisos = avisos.filter((aviso) => {
     const query = searchQuery.toLowerCase();
     const matchesSearch = aviso.title.toLowerCase().includes(query) || aviso.content.toLowerCase().includes(query);
@@ -360,25 +385,41 @@ export default function App() {
                 animate="show"
                 key={searchQuery + selectedCategory} // Forces re-animation when search or category changes
               >
-                {filteredAvisos.map((aviso) => (
+                {filteredAvisos.map((aviso) => {
+                  const isRead = readAvisos.has(aviso.id);
+                  return (
                   <motion.article 
                     key={aviso.id} 
                     variants={itemVariants}
                     layout // Smoothly adjust layout when items are filtered
-                    className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden hover:shadow-md transition-shadow transition-colors duration-200"
+                    className={`bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden hover:shadow-md transition-all duration-200 ${isRead ? 'opacity-60 bg-slate-50 dark:bg-slate-900/50' : ''}`}
                   >
                     <div className="p-6">
-                      <div className="flex flex-wrap items-center gap-3 mb-3">
-                        <span className="bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 px-2.5 py-1 rounded-md text-xs font-semibold uppercase tracking-wider border border-blue-100 dark:border-blue-800/50">
-                          {aviso.category || 'Geral'}
-                        </span>
-                        <div className="flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400">
-                          <Calendar className="w-4 h-4" />
-                          <time>{aviso.date}</time>
+                      <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+                        <div className="flex flex-wrap items-center gap-3">
+                          <span className="bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 px-2.5 py-1 rounded-md text-xs font-semibold uppercase tracking-wider border border-blue-100 dark:border-blue-800/50">
+                            {aviso.category || 'Geral'}
+                          </span>
+                          <div className="flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400">
+                            <Calendar className="w-4 h-4" />
+                            <time>{aviso.date}</time>
+                          </div>
                         </div>
+                        <button
+                          onClick={() => toggleReadStatus(aviso.id)}
+                          className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-md transition-colors ${
+                            isRead 
+                              ? 'text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800' 
+                              : 'text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30'
+                          }`}
+                          title={isRead ? "Marcar como não lido" : "Marcar como lido"}
+                        >
+                          {isRead ? <CheckCircle className="w-4 h-4" /> : <Circle className="w-4 h-4" />}
+                          <span className="hidden sm:inline">{isRead ? 'Lido' : 'Marcar como lido'}</span>
+                        </button>
                       </div>
                       
-                      <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-3 leading-snug">
+                      <h3 className={`text-xl font-bold mb-3 leading-snug ${isRead ? 'text-slate-700 dark:text-slate-300' : 'text-slate-900 dark:text-slate-100'}`}>
                         {aviso.title}
                       </h3>
                       
@@ -391,6 +432,9 @@ export default function App() {
                           href={aviso.link} 
                           target="_blank" 
                           rel="noreferrer"
+                          onClick={() => {
+                            if (!isRead) toggleReadStatus(aviso.id);
+                          }}
                           className="inline-flex items-center gap-1.5 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium text-sm transition-colors"
                         >
                           Ver documento original
@@ -399,7 +443,7 @@ export default function App() {
                       )}
                     </div>
                   </motion.article>
-                ))}
+                )})}
               </motion.div>
             )}
           </div>
