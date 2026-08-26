@@ -40,6 +40,7 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("Todas");
   const [toast, setToast] = useState<{ id: number, message: string } | null>(null);
   
   // Notification state
@@ -219,8 +220,12 @@ export default function App() {
 
   const filteredAvisos = avisos.filter((aviso) => {
     const query = searchQuery.toLowerCase();
-    return aviso.title.toLowerCase().includes(query) || aviso.content.toLowerCase().includes(query);
+    const matchesSearch = aviso.title.toLowerCase().includes(query) || aviso.content.toLowerCase().includes(query);
+    const matchesCategory = selectedCategory === "Todas" || (aviso.category || "Geral") === selectedCategory;
+    return matchesSearch && matchesCategory;
   });
+
+  const availableCategories = ["Todas", ...Array.from(new Set(avisos.map(a => a.category || "Geral"))).sort()];
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-950 text-gray-900 dark:text-slate-100 font-sans transition-colors duration-200">
@@ -305,10 +310,13 @@ export default function App() {
           </div>
         ) : (
           <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-4 px-1">
-              <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">Últimos Avisos</h2>
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 px-1">
+              <div>
+                <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-1">Últimos Avisos</h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Atualizado às {lastCheck.toLocaleTimeString()}</p>
+              </div>
               
-              <div className="relative w-full sm:w-72">
+              <div className="relative w-full sm:w-72 flex-shrink-0">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Search className="h-4 w-4 text-slate-400" />
                 </div>
@@ -321,12 +329,28 @@ export default function App() {
                 />
               </div>
             </div>
-            
-            <p className="text-xs text-slate-500 dark:text-slate-400 px-1 -mt-2">Atualizado às {lastCheck.toLocaleTimeString()}</p>
+
+            {availableCategories.length > 1 && (
+              <div className="flex items-center gap-2 overflow-x-auto px-1 pb-2 scrollbar-hide">
+                {availableCategories.map(cat => (
+                  <button
+                    key={cat}
+                    onClick={() => setSelectedCategory(cat)}
+                    className={`whitespace-nowrap px-4 py-1.5 rounded-full text-sm font-medium transition-colors border ${
+                      selectedCategory === cat 
+                        ? 'bg-slate-800 dark:bg-slate-200 text-white dark:text-slate-900 border-slate-800 dark:border-slate-200' 
+                        : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700'
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+            )}
             
             {filteredAvisos.length === 0 ? (
               <p className="text-center text-slate-500 dark:text-slate-400 py-10">
-                {searchQuery ? 'Nenhum aviso encontrado para esta pesquisa.' : 'Nenhum aviso encontrado.'}
+                {searchQuery || selectedCategory !== "Todas" ? 'Nenhum aviso encontrado para este filtro.' : 'Nenhum aviso encontrado.'}
               </p>
             ) : (
               <motion.div 
@@ -334,7 +358,7 @@ export default function App() {
                 variants={containerVariants}
                 initial="hidden"
                 animate="show"
-                key={searchQuery} // Forces re-animation when search changes
+                key={searchQuery + selectedCategory} // Forces re-animation when search or category changes
               >
                 {filteredAvisos.map((aviso) => (
                   <motion.article 
