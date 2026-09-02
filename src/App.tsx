@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useEffect, useState, useRef } from "react";
-import { Bell, BellRing, Rss, ExternalLink, Calendar, RefreshCcw, Moon, Sun, Search, X, CheckCircle, Circle } from "lucide-react";
+import { useEffect, useState, useRef, type FormEvent } from "react";
+import { Bell, BellRing, Rss, ExternalLink, Calendar, RefreshCcw, Moon, Sun, Search, X, CheckCircle, Circle, Mail, Send } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 
 interface Aviso {
@@ -42,6 +42,35 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("Todas");
   const [toast, setToast] = useState<{ id: number, message: string } | null>(null);
+  
+  // Email Subscription State
+  const [subEmail, setSubEmail] = useState("");
+  const [subStatus, setSubStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+
+  const handleSubscribe = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!subEmail) return;
+    
+    setSubStatus('loading');
+    
+    try {
+      const res = await fetch('/api/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: subEmail })
+      });
+      
+      if (res.ok) {
+        setSubStatus('success');
+        setSubEmail("");
+        setTimeout(() => setSubStatus('idle'), 3000);
+      } else {
+        setSubStatus('error');
+      }
+    } catch (err) {
+      setSubStatus('error');
+    }
+  };
   
   const [readAvisos, setReadAvisos] = useState<Set<string>>(() => {
     try {
@@ -300,27 +329,72 @@ export default function App() {
 
       <main className="max-w-5xl mx-auto px-4 py-8">
         
-        <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-6 mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6 transition-colors duration-200">
-          <div>
-            <h2 className="text-lg font-bold flex items-center gap-2 text-slate-800 dark:text-slate-100">
-              <Rss className="w-5 h-5 text-orange-500" />
-              Feed RSS Disponível
-            </h2>
-            <p className="text-slate-600 dark:text-slate-400 text-sm mt-1 max-w-2xl">
-              Como o site oficial não tem um feed RSS, criámos um para si. 
-              Pode adicionar este link ao seu leitor de RSS preferido (Feedly, Inoreader, etc.) 
-              para ser notificado sempre que houver novidades, mesmo com esta página fechada.
-            </p>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-6 flex flex-col justify-between gap-4 transition-colors duration-200">
+            <div>
+              <h2 className="text-lg font-bold flex items-center gap-2 text-slate-800 dark:text-slate-100">
+                <Rss className="w-5 h-5 text-orange-500" />
+                Feed RSS Disponível
+              </h2>
+              <p className="text-slate-600 dark:text-slate-400 text-sm mt-2">
+                Pode adicionar este link ao seu leitor de RSS preferido (Feedly, Inoreader, etc.) 
+                para ser notificado sempre que houver novidades, mesmo com esta página fechada.
+              </p>
+            </div>
+            <a 
+              href="/api/rss" 
+              target="_blank" 
+              rel="noreferrer"
+              className="self-start bg-orange-100 dark:bg-orange-500/10 text-orange-700 dark:text-orange-400 hover:bg-orange-200 dark:hover:bg-orange-500/20 px-5 py-2.5 rounded-lg font-medium flex items-center gap-2 transition-colors border border-orange-200 dark:border-orange-500/20"
+            >
+              <Rss className="w-4 h-4" />
+              Copiar Link RSS
+            </a>
           </div>
-          <a 
-            href="/api/rss" 
-            target="_blank" 
-            rel="noreferrer"
-            className="flex-shrink-0 bg-orange-100 dark:bg-orange-500/10 text-orange-700 dark:text-orange-400 hover:bg-orange-200 dark:hover:bg-orange-500/20 px-5 py-2.5 rounded-lg font-medium flex items-center gap-2 transition-colors border border-orange-200 dark:border-orange-500/20"
-          >
-            <Rss className="w-4 h-4" />
-            Copiar Link RSS
-          </a>
+
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-6 flex flex-col justify-between gap-4 transition-colors duration-200">
+            <div>
+              <h2 className="text-lg font-bold flex items-center gap-2 text-slate-800 dark:text-slate-100">
+                <Mail className="w-5 h-5 text-blue-500" />
+                Alertas por Email
+              </h2>
+              <p className="text-slate-600 dark:text-slate-400 text-sm mt-2">
+                Introduza o seu email para ser notificado imediatamente assim que a escola publicar um novo aviso ou novidade.
+              </p>
+            </div>
+            
+            <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row items-center gap-3">
+              <input 
+                type="email" 
+                required
+                placeholder="o-seu-email@exemplo.com"
+                value={subEmail}
+                onChange={(e) => setSubEmail(e.target.value)}
+                disabled={subStatus === 'loading' || subStatus === 'success'}
+                className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-lg bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+              />
+              <button 
+                type="submit"
+                disabled={subStatus === 'loading' || subStatus === 'success'}
+                className={`w-full sm:w-auto flex-shrink-0 flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg font-medium transition-colors ${
+                  subStatus === 'success' 
+                    ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20' 
+                    : subStatus === 'error'
+                    ? 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20'
+                    : 'bg-blue-600 hover:bg-blue-700 text-white'
+                } disabled:opacity-70`}
+              >
+                {subStatus === 'loading' ? <RefreshCcw className="w-4 h-4 animate-spin" /> : 
+                 subStatus === 'success' ? <CheckCircle className="w-4 h-4" /> : 
+                 <Send className="w-4 h-4" />}
+                <span>
+                  {subStatus === 'loading' ? 'A subscrever...' : 
+                   subStatus === 'success' ? 'Subscrito!' : 
+                   subStatus === 'error' ? 'Erro' : 'Subscrever'}
+                </span>
+              </button>
+            </form>
+          </div>
         </div>
 
         {loading && avisos.length === 0 ? (

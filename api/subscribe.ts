@@ -1,49 +1,14 @@
-import express from "express";
-import path from "path";
-import { createServer as createViteServer } from "vite";
-import cors from "cors";
-import { getAvisos, generateRSS } from "./src/lib/scraper";
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-const app = express();
-const PORT = Number(process.env.PORT) || 3000;
-
-app.use(cors());
-app.use(express.json());
-
-// API Routes
-app.get("/api/avisos", async (req, res) => {
-  try {
-    const avisos = await getAvisos();
-    res.json(avisos);
-  } catch (error) {
-    res.status(500).json({ error: "Failed to fetch avisos" });
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
-});
-
-app.get("/api/rss", async (req, res) => {
-  try {
-    const feed = await generateRSS();
-    res.type('application/xml');
-    res.send(feed.rss2());
-  } catch (error) {
-    res.status(500).json({ error: "Failed to generate RSS" });
-  }
-});
-
-app.get("/api/atom", async (req, res) => {
-  try {
-    const feed = await generateRSS();
-    res.type('application/atom+xml');
-    res.send(feed.atom1());
-  } catch (error) {
-    res.status(500).json({ error: "Failed to generate Atom" });
-  }
-});
-
-app.post("/api/subscribe", async (req, res) => {
+  
   const { email } = req.body;
+  
   if (!email || !email.includes('@')) {
-    return res.status(400).json({ error: "Email inválido" });
+    return res.status(400).json({ error: 'Email inválido' });
   }
 
   const resendApiKey = process.env.RESEND_API_KEY;
@@ -53,7 +18,9 @@ app.post("/api/subscribe", async (req, res) => {
   const resendAudienceId = process.env.RESEND_AUDIENCE_ID;
 
   try {
+    // 1. Resend API (Se a chave RESEND_API_KEY estiver configurada no Vercel)
     if (resendApiKey) {
+      // Se tiver Audience ID configurado, adiciona aos contactos do Resend
       if (resendAudienceId) {
         await fetch(`https://api.resend.com/audiences/${resendAudienceId}/contacts`, {
           method: 'POST',
@@ -65,6 +32,7 @@ app.post("/api/subscribe", async (req, res) => {
         }).catch(err => console.error('Erro ao adicionar contacto ao Resend:', err));
       }
 
+      // Envia email de confirmação para o utilizador
       await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
@@ -88,6 +56,7 @@ app.post("/api/subscribe", async (req, res) => {
         })
       });
 
+      // Se tiver email de administrador configurado, notifica o administrador
       if (adminEmail) {
         await fetch('https://api.resend.com/emails', {
           method: 'POST',
@@ -105,6 +74,7 @@ app.post("/api/subscribe", async (req, res) => {
       }
     }
 
+    // 2. Webhook URL (Se estiver configurado um Webhook ex: Zapier, Make, Discord, Google Sheets)
     if (webhookUrl) {
       await fetch(webhookUrl, {
         method: 'POST',
@@ -117,36 +87,21 @@ app.post("/api/subscribe", async (req, res) => {
       }).catch(err => console.error('Erro ao enviar para o webhook:', err));
     }
 
+    // Se nenhuma chave estiver configurada, simula um pequeno delay e responde sucesso
     if (!resendApiKey && !webhookUrl) {
       await new Promise(resolve => setTimeout(resolve, 600));
     }
 
-    return res.status(200).json({ success: true, message: 'Subscrição registada com sucesso!' });
+    return res.status(200).json({ 
+      success: true, 
+      message: 'Subscrição registada com sucesso!' 
+    });
   } catch (error: any) {
-    return res.status(500).json({ error: 'Erro ao processar subscrição', details: error?.message });
-  }
-});
-
-async function startServer() {
-  if (process.env.NODE_ENV !== "production") {
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: "spa",
-    });
-    app.use(vite.middlewares);
-  } else {
-    const distPath = path.join(process.cwd(), 'dist');
-    app.use(express.static(distPath));
-    app.get('*', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
+    console.error('Erro na subscrição:', error);
+    return res.status(500).json({ 
+      error: 'Ocorreu um erro ao processar a subscrição.',
+      details: error?.message 
     });
   }
-
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server running on port ${PORT}`);
-  });
 }
 
-startServer();
-
-export default app;
