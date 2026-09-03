@@ -127,6 +127,66 @@ app.post("/api/subscribe", async (req, res) => {
   }
 });
 
+// Cron - deteta novos avisos e dispara todos os canais (email broadcast, telegram, discord, web push)
+app.all("/api/cron", async (req, res) => {
+  const cronSecret = process.env.CRON_SECRET;
+  if (cronSecret) {
+    const authHeader = req.headers.authorization;
+    const querySecret = req.query.secret as string | undefined;
+    if (authHeader !== `Bearer ${cronSecret}` && querySecret !== cronSecret) {
+      const isVercelCron = req.headers['x-vercel-cron'] === '1' || req.headers['x-vercel-cron'] === 'true';
+      if (!isVercelCron) return res.status(401).json({ error: 'Unauthorized' });
+    }
+  }
+  try {
+    const { getNewAvisos, markAvisosAsSent, sendBroadcastEmails, sendTelegram, sendDiscord, sendWebPush, sendGenericWebhook } = await import("./api/lib/notify.js");
+    const avisos = await getAvisos();
+    if (!avisos || avisos.length === 0) return res.status(200).json({ ok: true, count: 0, message: 'Nenhum aviso encontrado' });
+    const force = req.query.force === 'true' || req.query.force === '1';
+    const newAvisos = force ? avisos.slice(0, 3) : await getNewAvisos(avisos);
+    if (newAvisos.length === 0) {
+      return res.status(200).json({ ok: true, checkedAt: new Date().toISOString(), count: avisos.length, newCount: 0, message: 'Nenhum aviso novo' });
+    }
+    const [emailRes, telegramRes, discordRes, pushRes, webhookRes] = await Promise.all([
+      sendBroadcastEmails(newAvisos).catch(e => ({ sent: 0, error: String(e) })),
+      sendTelegram(newAvisos).catch(e => ({ sent: 0, error: String(e) })),
+      sendDiscord(newAvisos).catch(e => ({ sent: 0, error: String(e) })),
+      sendWebPush(newAvisos).catch(e => ({ sent: 0, error: String(e) })),
+      sendGenericWebhook(newAvisos).catch(e => ({ sent: 0, error: String(e) })),
+    ]);
+    const anySent = emailRes.sent > 0 || telegramRes.sent > 0 || discordRes.sent > 0 || pushRes.sent > 0 || webhookRes.sent > 0;
+    const noChannels = [emailRes, telegramRes, discordRes, pushRes, webhookRes].every(r => (r as any).error?.includes('not configured'));
+    if (anySent || noChannels || force) {
+      await markAvisosAsSent(avisos);
+    }
+    return res.status(200).json({ ok: true, checkedAt: new Date().toISOString(), count: avisos.length, newCount: newAvisos.length, newAvisos: newAvisos.map(a => ({ id: a.id, title: a.title, date: a.date })), results: { email: emailRes, telegram: telegramRes, discord: discordRes, webpush: pushRes, webhook: webhookRes } });
+  } catch (error: any) {
+    console.error('Cron error:', error);
+    return res.status(500).json({ error: 'Erro no cron job', details: error?.message });
+  }
+});
+
+// Web Push endpoints (dev mirror of /api/push/*)
+app.get("/api/push/vapid", async (req, res) => {
+  const publicKey = process.env.VAPID_PUBLIC_KEY;
+  if (!publicKey) return res.status(500).json({ error: 'VAPID_PUBLIC_KEY not configured' });
+  res.json({ publicKey });
+});
+app.post("/api/push/subscribe", async (req, res) => {
+  const sub = req.body;
+  if (!sub || !sub.endpoint) return res.status(400).json({ error: 'Invalid subscription' });
+  const { addPushSubscription } = await import("./api/lib/store.js");
+  await addPushSubscription(sub);
+  res.json({ success: true });
+});
+app.post("/api/push/unsubscribe", async (req, res) => {
+  const { endpoint } = req.body;
+  if (!endpoint) return res.status(400).json({ error: 'endpoint required' });
+  const { removePushSubscription } = await import("./api/lib/store.js");
+  await removePushSubscription(endpoint);
+  res.json({ success: true });
+});
+
 async function startServer() {
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
