@@ -41,10 +41,23 @@ app.get("/api/atom", async (req, res) => {
 });
 
 app.post("/api/subscribe", async (req, res) => {
-  const { email } = req.body;
-  if (!email || !email.includes('@')) {
+  const rawEmail = req.body?.email as string;
+  const normalizedEmail = typeof rawEmail === 'string' ? rawEmail.toLowerCase().trim() : '';
+  if (!normalizedEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail) || normalizedEmail.length > 254) {
     return res.status(400).json({ error: "Email inválido" });
   }
+  const email = normalizedEmail;
+
+  // Rate limit
+  const ip = (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || (req.headers['x-real-ip'] as string) || req.ip || 'unknown';
+  const { checkRateLimit, getUnsubscribeUrl } = await import("./api/lib/security.js");
+  const rl = await checkRateLimit(`subscribe:${ip}`, 5, 60_000);
+  if (!rl.allowed) {
+    res.setHeader('Retry-After', String(Math.ceil(rl.resetIn / 1000)));
+    return res.status(429).json({ error: 'Muitas tentativas. Tente novamente em alguns segundos.' });
+  }
+  res.setHeader('X-RateLimit-Remaining', String(rl.remaining));
+  const unsubscribeUrl = getUnsubscribeUrl(email);
 
   const resendApiKey = process.env.RESEND_API_KEY;
   const webhookUrl = process.env.EMAIL_WEBHOOK_URL;
@@ -75,6 +88,10 @@ app.post("/api/subscribe", async (req, res) => {
           from: emailFrom,
           to: [email],
           subject: '✅ Subscrição de Avisos - Escola Secundária José Falcão',
+          headers: {
+            'List-Unsubscribe': `<${unsubscribeUrl}>`,
+            'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+          },
           html: `
             <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #1e293b;">
               <h2 style="color: #2563eb;">Subscrição Confirmada!</h2>
@@ -83,6 +100,9 @@ app.post("/api/subscribe", async (req, res) => {
               <p>Sempre que um novo aviso for publicado no portal da escola, será notificado por este meio.</p>
               <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
               <p style="font-size: 12px; color: #64748b;">Este é um serviço independente de agregação de avisos da ESJF.</p>
+              <p style="font-size: 11px; color: #94a3b8; text-align:center; margin-top:16px;">
+                Não quer receber mais? <a href="${unsubscribeUrl}" style="color:#2563eb;text-decoration:underline;">Cancelar subscrição</a>
+              </p>
             </div>
           `,
         })
@@ -185,6 +205,11 @@ app.post("/api/push/unsubscribe", async (req, res) => {
   const { removePushSubscription } = await import("./api/lib/store.js");
   await removePushSubscription(endpoint);
   res.json({ success: true });
+});
+
+app.all("/api/unsubscribe", async (req, res) => {
+  const handler = (await import("./api/unsubscribe.js")).default;
+  return (handler as any)(req, res);
 });
 
 async function startServer() {

@@ -1,4 +1,5 @@
 import { getLastSentIds, setLastSentIds, getPushSubscriptions } from './store.js';
+import { getUnsubscribeUrl } from './security.js';
 
 export interface Aviso {
   id: string;
@@ -115,7 +116,7 @@ export async function sendBroadcastEmails(newAvisos: Aviso[]): Promise<{ sent: n
     }
   }
 
-  // Build email HTML for new avisos
+  // Build email HTML for new avisos (shared part)
   const avisosHtml = newAvisos.map(a => `
     <div style="border:1px solid #e2e8f0; border-radius:8px; padding:16px; margin-bottom:12px; background:#f8fafc;">
       <span style="display:inline-block; background:#dbeafe; color:#1e40af; font-size:11px; font-weight:700; padding:2px 8px; border-radius:4px; text-transform:uppercase;">${a.category || 'Geral'}</span>
@@ -126,60 +127,50 @@ export async function sendBroadcastEmails(newAvisos: Aviso[]): Promise<{ sent: n
     </div>
   `).join('');
 
-  const html = `
+  const subject = newAvisos.length === 1
+    ? `🔔 Novo aviso: ${newAvisos[0].title.slice(0, 60)}`
+    : `🔔 ${newAvisos.length} novos avisos — ESJF`;
+
+  // Send personalized per recipient (unsubscribe link com token único)
+  let sent = 0;
+  for (const to of recipients) {
+    const unsubscribeUrl = getUnsubscribeUrl(to);
+    const html = `
     <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #1e293b;">
       <h2 style="color: #2563eb; margin-bottom:4px;">🔔 ${newAvisos.length === 1 ? 'Novo aviso' : `${newAvisos.length} novos avisos`} — ESJF</h2>
       <p style="color:#64748b; font-size:13px; margin-top:0;">Escola Secundária José Falcão • ${new Date().toLocaleString('pt-PT')}</p>
       <hr style="border:none; border-top:1px solid #e2e8f0; margin:16px 0;" />
       ${avisosHtml}
       <hr style="border:none; border-top:1px solid #e2e8f0; margin:20px 0;" />
-      <p style="font-size:11px; color:#94a3b8; text-align:center;">Recebes este email porque subscreveste os alertas em Avisos ESJF. <br/>Para anular, responde a este email.</p>
-      <p style="font-size:11px; color:#94a3b8; text-align:center;"><a href="https://esjf.edu.pt/avisos.php" style="color:#94a3b8;">Ver todos os avisos no portal da escola</a></p>
+      <p style="font-size:11px; color:#94a3b8; text-align:center;">Recebes este email porque subscreveste os alertas em Avisos ESJF.</p>
+      <p style="font-size:11px; color:#94a3b8; text-align:center;"><a href="${unsubscribeUrl}" style="color:#2563eb;text-decoration:underline;">Cancelar subscrição</a> • <a href="https://esjf.edu.pt/avisos.php" style="color:#94a3b8;">Ver todos os avisos</a></p>
+      <p style="font-size:10px; color:#cbd5e1; text-align:center; margin-top:8px;">Se não quiseres receber mais, clica em cancelar — é imediato e seguro.</p>
     </div>
   `;
-
-  const subject = newAvisos.length === 1
-    ? `🔔 Novo aviso: ${newAvisos[0].title.slice(0, 60)}`
-    : `🔔 ${newAvisos.length} novos avisos — ESJF`;
-
-  // Resend batch: up to 100 per request
-  let sent = 0;
-  const batchSize = 100;
-  for (let i = 0; i < recipients.length; i += batchSize) {
-    const batch = recipients.slice(i, i + batchSize);
     try {
-      // Use batch endpoint if available
-      const res = await fetch('https://api.resend.com/emails/batch', {
+      const res = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(batch.map(to => ({
+        body: JSON.stringify({
           from: emailFrom,
           to: [to],
           subject,
           html,
-        }))),
+          headers: {
+            'List-Unsubscribe': `<${unsubscribeUrl}>`,
+            'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+          },
+        }),
       });
-      if (!res.ok) {
-        // Fallback to single sends
-        const txt = await res.text();
-        console.error('Resend batch error, falling back to single:', txt);
-        for (const to of batch) {
-          await fetch('https://api.resend.com/emails', {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ from: emailFrom, to: [to], subject, html }),
-          });
-          sent++;
-          await new Promise(r => setTimeout(r, 200)); // rate limit
-        }
-      } else {
-        sent += batch.length;
-      }
+      if (res.ok) sent++;
+      else console.error('Resend send error for', to, await res.text());
+      // Respeita rate limit da Resend (2 req/s no free)
+      await new Promise(r => setTimeout(r, 300));
     } catch (e) {
-      console.error('sendBroadcastEmails batch error:', e);
+      console.error('sendBroadcastEmails error for', to, e);
     }
   }
 
