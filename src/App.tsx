@@ -4,8 +4,10 @@
  */
 
 import { useEffect, useState, useRef, type FormEvent } from "react";
-import { Bell, BellRing, Rss, ExternalLink, Calendar, RefreshCcw, Moon, Sun, Search, X, CheckCircle, Circle, Mail, Send, Volume2, AlertTriangle } from "lucide-react";
+import { NavLink, Routes, Route, Link } from "react-router-dom";
+import { Bell, BellRing, Rss, ExternalLink, Calendar, RefreshCcw, Moon, Sun, Search, X, CheckCircle, Circle, Mail, Send, Volume2, AlertTriangle, Settings } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
+import NotificationsPage from "./pages/Notifications.tsx";
 
 interface Aviso {
   id: string;
@@ -430,11 +432,23 @@ export default function App() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-950 text-gray-900 dark:text-slate-100 font-sans transition-colors duration-200">
       <header className="bg-slate-900 text-white shadow-lg sticky top-0 z-10 border-b border-transparent dark:border-slate-800 transition-colors duration-200">
-        <div className="max-w-5xl mx-auto px-4 py-6">
+        <div className="max-w-5xl mx-auto px-4 py-4">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight">Avisos ESJF</h1>
-              <p className="text-slate-400 text-sm mt-1">Escola Secundária José Falcão - Portal Não Oficial</p>
+            <div className="flex items-center gap-6">
+              <div>
+                <Link to="/" className="hover:opacity-90 transition-opacity">
+                  <h1 className="text-2xl font-bold tracking-tight">Avisos ESJF</h1>
+                  <p className="text-slate-400 text-sm mt-1">Escola Secundária José Falcão - Portal Não Oficial</p>
+                </Link>
+              </div>
+              <nav className="hidden sm:flex items-center gap-1 ml-2">
+                <NavLink to="/" end className={({ isActive }) => `px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${isActive ? 'bg-white text-slate-900' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}>
+                  Avisos
+                </NavLink>
+                <NavLink to="/notificacoes" className={({ isActive }) => `px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${isActive ? 'bg-white text-slate-900' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}>
+                  <Settings className="w-4 h-4" /> Notificações
+                </NavLink>
+              </nav>
             </div>
             <div className="flex items-center gap-3">
               <button
@@ -506,115 +520,56 @@ export default function App() {
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-4 py-8">
-        {notificationPermission === 'denied' && (
-          <div className="mb-6 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 rounded-xl p-4 flex items-start gap-3">
-            <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-            <div className="flex-1">
-              <h3 className="font-semibold text-amber-800 dark:text-amber-200 text-sm">Notificações bloqueadas</h3>
-              <p className="text-amber-700 dark:text-amber-300/80 text-sm mt-1 leading-relaxed">
-                O seu navegador está a bloquear notificações deste site. Para receber alertas quando houver novos avisos, clique no cadeado na barra de endereço → <strong>Definições do site</strong> → <strong>Notificações</strong> → <strong>Permitir</strong>, e depois recarregue a página.
-              </p>
-            </div>
-            <button onClick={() => setNotificationPermission(Notification.permission as any)} className="text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-200 p-1" aria-label="Fechar">
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        )}
-        {notificationPermission === 'unsupported' && (
-          <div className="mb-6 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-4 flex items-start gap-3">
-            <Bell className="w-5 h-5 text-slate-500 dark:text-slate-400 shrink-0 mt-0.5" />
-            <div>
-              <h3 className="font-semibold text-slate-700 dark:text-slate-200 text-sm">Notificações não suportadas</h3>
-              <p className="text-slate-600 dark:text-slate-400 text-sm mt-1">
-                O seu navegador não suporta notificações. Use o <strong>Feed RSS</strong> ou <strong>Alertas por Email</strong> abaixo para não perder nenhum aviso.
-              </p>
-            </div>
-          </div>
-        )}
-        {notificationsEnabled && (
-          <div className="mb-6 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/30 rounded-xl p-4 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <div className="bg-emerald-500/10 p-2 rounded-full">
-                <BellRing className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+      <Routes>
+        <Route path="/" element={
+          <main className="max-w-5xl mx-auto px-4 py-8">
+            {notificationPermission === 'denied' && (
+              <div className="mb-6 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 rounded-xl p-4 flex items-start gap-3">
+                <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <h3 className="font-semibold text-amber-800 dark:text-amber-200 text-sm">Notificações bloqueadas</h3>
+                  <p className="text-amber-700 dark:text-amber-300/80 text-sm mt-1 leading-relaxed">
+                    O seu navegador está a bloquear notificações. <Link to="/notificacoes" className="underline font-medium">Ir para Notificações</Link> para ver alternativas (Email/RSS).
+                  </p>
+                </div>
+                <button onClick={() => setNotificationPermission(Notification.permission as any)} className="text-amber-600 dark:text-amber-400 hover:text-amber-800 p-1"><X className="w-4 h-4" /></button>
               </div>
-              <div>
-                <h3 className="font-semibold text-emerald-800 dark:text-emerald-200 text-sm">Notificações ativas ✓</h3>
-                <p className="text-emerald-700 dark:text-emerald-300/80 text-xs mt-0.5">Vai receber som + alerta sempre que houver avisos novos (verificação a cada 3 min).</p>
-              </div>
-            </div>
-            <button onClick={testNotification} className="hidden sm:flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white transition-colors">
-              <Volume2 className="w-4 h-4" /> Testar
-            </button>
-          </div>
-        )}
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-6 flex flex-col justify-between gap-4 transition-colors duration-200">
-            <div>
-              <h2 className="text-lg font-bold flex items-center gap-2 text-slate-800 dark:text-slate-100">
-                <Rss className="w-5 h-5 text-orange-500" />
-                Feed RSS
-              </h2>
-              <p className="text-slate-600 dark:text-slate-400 text-sm mt-2">
-                Adicione ao Feedly/Inoreader para ser notificado mesmo com a página fechada.
-              </p>
-            </div>
-            <div className="flex gap-2">
-              <a href="/api/rss" target="_blank" rel="noreferrer" className="flex-1 text-center bg-orange-100 dark:bg-orange-500/10 text-orange-700 dark:text-orange-400 hover:bg-orange-200 dark:hover:bg-orange-500/20 px-3 py-2.5 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors border border-orange-200 dark:border-orange-500/20 text-sm">
-                <Rss className="w-4 h-4" /> RSS
-              </a>
-              <a href="/api/atom" target="_blank" rel="noreferrer" className="flex-1 text-center bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 px-3 py-2.5 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors border border-slate-200 dark:border-slate-700 text-sm">
-                Atom
-              </a>
-            </div>
-          </div>
-
-          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-6 flex flex-col justify-between gap-4 transition-colors duration-200">
-            <div>
-              <h2 className="text-lg font-bold flex items-center gap-2 text-slate-800 dark:text-slate-100">
-                <Mail className="w-5 h-5 text-blue-500" />
-                Alertas por Email
-              </h2>
-              <p className="text-slate-600 dark:text-slate-400 text-sm mt-2">
-                Receba um email automático assim que a escola publicar um novo aviso.
-              </p>
-            </div>
-            <form onSubmit={handleSubscribe} className="flex flex-col gap-3">
-              <input type="email" required placeholder="o-seu-email@exemplo.com" value={subEmail} onChange={(e) => setSubEmail(e.target.value)} disabled={subStatus === 'loading' || subStatus === 'success'} className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-lg bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors text-sm" />
-              <button type="submit" disabled={subStatus === 'loading' || subStatus === 'success'} className={`w-full flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg font-medium transition-colors text-sm ${subStatus === 'success' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20' : subStatus === 'error' ? 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20' : 'bg-blue-600 hover:bg-blue-700 text-white'} disabled:opacity-70`}>
-                {subStatus === 'loading' ? <RefreshCcw className="w-4 h-4 animate-spin" /> : subStatus === 'success' ? <CheckCircle className="w-4 h-4" /> : <Send className="w-4 h-4" />}
-                <span>{subStatus === 'loading' ? 'A subscrever...' : subStatus === 'success' ? 'Subscrito!' : subStatus === 'error' ? 'Erro' : 'Subscrever por Email'}</span>
-              </button>
-            </form>
-          </div>
-
-          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-6 flex flex-col justify-between gap-4 transition-colors duration-200">
-            <div>
-              <h2 className="text-lg font-bold flex items-center gap-2 text-slate-800 dark:text-slate-100">
-                {pushEnabled ? <BellRing className="w-5 h-5 text-emerald-500" /> : <Bell className="w-5 h-5 text-violet-500" />}
-                Push Notificações
-              </h2>
-              <p className="text-slate-600 dark:text-slate-400 text-sm mt-2">
-                {pushEnabled
-                  ? '✅ Ativo — vais receber avisos mesmo com o browser fechado.'
-                  : 'Receba notificações nativas mesmo com o browser fechado (Chrome/Android).'}
-              </p>
-              {!pushSupported && <p className="text-xs text-amber-600 dark:text-amber-400 mt-2">Web Push não suportado neste navegador/iOS precisa instalar PWA.</p>}
-            </div>
-            {pushEnabled ? (
-              <button onClick={unsubscribePush} disabled={pushLoading} className="w-full flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg font-medium transition-colors text-sm bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 disabled:opacity-60">
-                {pushLoading ? <RefreshCcw className="w-4 h-4 animate-spin" /> : <X className="w-4 h-4" />}
-                <span>{pushLoading ? 'A processar...' : 'Desativar Push'}</span>
-              </button>
-            ) : (
-              <button onClick={subscribePush} disabled={pushLoading || !pushSupported} className="w-full flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg font-medium transition-colors text-sm bg-violet-600 hover:bg-violet-700 text-white disabled:opacity-60">
-                {pushLoading ? <RefreshCcw className="w-4 h-4 animate-spin" /> : <BellRing className="w-4 h-4" />}
-                <span>{pushLoading ? 'A ativar...' : 'Ativar Push'}</span>
-              </button>
             )}
-          </div>
-        </div>
+            {notificationPermission === 'unsupported' && (
+              <div className="mb-6 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-4 flex items-start gap-3">
+                <Bell className="w-5 h-5 text-slate-500 shrink-0 mt-0.5" />
+                <div>
+                  <h3 className="font-semibold text-slate-700 dark:text-slate-200 text-sm">Notificações não suportadas</h3>
+                  <p className="text-slate-600 dark:text-slate-400 text-sm mt-1">Use <Link to="/notificacoes" className="text-blue-600 dark:text-blue-400 underline">Email ou RSS</Link> para não perder avisos.</p>
+                </div>
+              </div>
+            )}
+            {notificationsEnabled && (
+              <div className="mb-6 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/30 rounded-xl p-4 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="bg-emerald-500/10 p-2 rounded-full"><BellRing className="w-5 h-5 text-emerald-600 dark:text-emerald-400" /></div>
+                  <div>
+                    <h3 className="font-semibold text-emerald-800 dark:text-emerald-200 text-sm">Notificações ativas ✓</h3>
+                    <p className="text-emerald-700 dark:text-emerald-300/80 text-xs mt-0.5">Verificação a cada 3 min. <Link to="/notificacoes" className="underline">Gerir em Notificações</Link></p>
+                  </div>
+                </div>
+                <button onClick={testNotification} className="hidden sm:flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white"><Volume2 className="w-4 h-4" /> Testar</button>
+              </div>
+            )}
+            
+            {/* CTA leve para página dedicada */}
+            <Link to="/notificacoes" className="mb-8 flex items-center justify-between gap-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 hover:shadow-md transition-shadow group">
+              <div className="flex items-center gap-3">
+                <div className="bg-violet-100 dark:bg-violet-900/30 p-2.5 rounded-lg group-hover:bg-violet-200 dark:group-hover:bg-violet-900/50 transition-colors">
+                  <Settings className="w-5 h-5 text-violet-600 dark:text-violet-400" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-slate-900 dark:text-slate-100 text-sm">Receba avisos frescos</h3>
+                  <p className="text-xs text-slate-600 dark:text-slate-400">Email • Push (browser fechado) • RSS • Telegram</p>
+                </div>
+              </div>
+              <span className="text-sm font-medium text-violet-600 dark:text-violet-400 flex items-center gap-1">Gerir <span className="hidden sm:inline">notificações</span> →</span>
+            </Link>
 
         {loading && avisos.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-slate-400 dark:text-slate-500">
@@ -741,7 +696,34 @@ export default function App() {
             )}
           </div>
         )}
-      </main>
+          </main>
+        } />
+        <Route path="/notificacoes" element={
+          <NotificationsPage
+            subEmail={subEmail}
+            setSubEmail={setSubEmail}
+            subStatus={subStatus}
+            handleSubscribe={handleSubscribe}
+            pushSupported={pushSupported}
+            pushEnabled={pushEnabled}
+            pushLoading={pushLoading}
+            subscribePush={subscribePush}
+            unsubscribePush={unsubscribePush}
+          />
+        } />
+        <Route path="*" element={
+          <main className="max-w-5xl mx-auto px-4 py-16 text-center">
+            <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">Página não encontrada</h2>
+            <Link to="/" className="inline-block mt-4 text-blue-600 dark:text-blue-400 hover:underline">Voltar aos avisos →</Link>
+          </main>
+        } />
+      </Routes>
+
+      {/* Mobile nav */}
+      <nav className="sm:hidden fixed bottom-0 inset-x-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex z-20">
+        <NavLink to="/" end className={({ isActive }) => `flex-1 py-3 text-center text-sm font-medium ${isActive ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/30' : 'text-slate-600 dark:text-slate-400'}`}>Avisos</NavLink>
+        <NavLink to="/notificacoes" className={({ isActive }) => `flex-1 py-3 text-center text-sm font-medium flex items-center justify-center gap-1.5 ${isActive ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/30' : 'text-slate-600 dark:text-slate-400'}`}><Settings className="w-4 h-4" /> Notificações</NavLink>
+      </nav>
 
       <AnimatePresence>
         {toast && (
