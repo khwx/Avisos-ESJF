@@ -257,8 +257,9 @@ export async function sendWebPush(newAvisos: Aviso[]): Promise<{ sent: number; e
 
   let webpush: any;
   try {
-    webpush = await import('web-push');
-    webpush.default.setVapidDetails(subject, publicKey, privateKey);
+    const imported = await import('web-push');
+    webpush = imported.default?.setVapidDetails ? imported.default : imported;
+    webpush.setVapidDetails(subject, publicKey, privateKey);
   } catch (e) {
     return { sent: 0, error: 'web-push module not available' };
   }

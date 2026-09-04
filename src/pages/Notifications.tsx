@@ -16,6 +16,27 @@ interface Props {
 export default function NotificationsPage({ subEmail, setSubEmail, subStatus, handleSubscribe, pushSupported, pushEnabled, pushLoading, subscribePush, unsubscribePush }: Props) {
   const [unsubEmail, setUnsubEmail] = useState('');
   const [unsubStatus, setUnsubStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [testPushLoading, setTestPushLoading] = useState(false);
+
+  const handleTestPush = async () => {
+    setTestPushLoading(true);
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.getSubscription();
+      const res = await fetch('/api/push/test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(sub ? { subscription: sub } : {}),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Falha ao testar push');
+      alert('🔔 Notificação Push de teste enviada com sucesso! Verifique a notificação no Chrome / Windows / Mac.');
+    } catch (e: any) {
+      alert('Erro ao testar Push: ' + (e?.message || e));
+    } finally {
+      setTestPushLoading(false);
+    }
+  };
 
   const handleUnsubscribe = async (e: FormEvent) => {
     e.preventDefault();
@@ -105,9 +126,26 @@ export default function NotificationsPage({ subEmail, setSubEmail, subStatus, ha
             {!pushSupported && <p className="text-xs text-amber-600 dark:text-amber-400 mt-2">Web Push não suportado neste navegador. No iOS instale a PWA.</p>}
           </div>
           {pushEnabled ? (
-            <button onClick={unsubscribePush} disabled={pushLoading} className="w-full flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg font-medium text-sm bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 disabled:opacity-60">
-              {pushLoading ? <RefreshCcw className="w-4 h-4 animate-spin" /> : <X className="w-4 h-4" />}<span>{pushLoading ? 'A processar...' : 'Desativar Push'}</span>
-            </button>
+            <div className="flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={handleTestPush}
+                disabled={testPushLoading}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 hover:bg-violet-100 dark:hover:bg-violet-900/50 border border-violet-200 dark:border-violet-800 disabled:opacity-60 transition-colors"
+              >
+                {testPushLoading ? <RefreshCcw className="w-4 h-4 animate-spin" /> : <Volume2 className="w-4 h-4" />}
+                <span>{testPushLoading ? 'A enviar teste ao Chrome...' : 'Testar Notificação Push no Chrome'}</span>
+              </button>
+              <button
+                type="button"
+                onClick={unsubscribePush}
+                disabled={pushLoading}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium text-xs bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 disabled:opacity-60 transition-colors"
+              >
+                {pushLoading ? <RefreshCcw className="w-3.5 h-3.5 animate-spin" /> : <X className="w-3.5 h-3.5" />}
+                <span>{pushLoading ? 'A processar...' : 'Desativar Push'}</span>
+              </button>
+            </div>
           ) : (
             <button onClick={subscribePush} disabled={pushLoading || !pushSupported} className="w-full flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg font-medium text-sm bg-violet-600 hover:bg-violet-700 text-white disabled:opacity-60">
               {pushLoading ? <RefreshCcw className="w-4 h-4 animate-spin" /> : <BellRing className="w-4 h-4" />}<span>{pushLoading ? 'A ativar...' : 'Ativar Push'}</span>

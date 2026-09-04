@@ -207,6 +207,11 @@ app.post("/api/push/unsubscribe", async (req, res) => {
   res.json({ success: true });
 });
 
+app.all("/api/push/test", async (req, res) => {
+  const handler = (await import("./api/push/test.js")).default;
+  return (handler as any)(req, res);
+});
+
 app.all("/api/unsubscribe", async (req, res) => {
   const handler = (await import("./api/unsubscribe.js")).default;
   return (handler as any)(req, res);
