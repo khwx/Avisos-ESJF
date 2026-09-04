@@ -57,3 +57,4 @@ npm run start
 ## ⚠️ Aviso Legal
 
 Este é um projeto **não oficial** e de código aberto, mantido pela comunidade. Não tem qualquer vínculo institucional com a Escola Secundária José Falcão ou com o Ministério da Educação. Todos os direitos dos conteúdos e informações extraídos pertencem à respetiva instituição.
+
