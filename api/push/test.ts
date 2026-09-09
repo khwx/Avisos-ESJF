@@ -30,7 +30,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     title: '🔔 Teste de Notificação Web Push — ESJF',
     body: 'O Chrome está pronto para receber notificações mesmo com o navegador fechado!',
     url: '/',
-    icon: 'https://esjf.edu.pt/assets/img/favicon-esjf.png',
+    icon: 'https://avisos-esjf.vercel.app/icon-192.png',
   });
 
   let sent = 0;

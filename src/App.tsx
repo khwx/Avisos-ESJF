@@ -160,8 +160,8 @@ export default function App() {
         if (reg && (reg as any).showNotification) {
           await reg.showNotification(title, {
             body,
-            icon: 'https://esjf.edu.pt/assets/img/favicon-esjf.png',
-            badge: 'https://esjf.edu.pt/assets/img/favicon-esjf.png',
+            icon: '/icon-192.png',
+            badge: '/icon-192.png',
             data: { url: url || '/' },
             vibrate: [200, 100, 200],
           } as any);
@@ -170,7 +170,7 @@ export default function App() {
       }
       new Notification(title, {
         body,
-        icon: 'https://esjf.edu.pt/assets/img/favicon-esjf.png',
+        icon: '/icon-192.png',
       });
     } catch (e) {
       // Fallback

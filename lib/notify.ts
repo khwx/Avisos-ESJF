@@ -275,7 +275,7 @@ export async function sendWebPush(newAvisos: Aviso[]): Promise<{ sent: number; e
     title: newAvisos.length === 1 ? `🔔 ${newAvisos[0].title}` : `🔔 ${newAvisos.length} novos avisos — ESJF`,
     body: newAvisos.length === 1 ? (newAvisos[0].content?.slice(0, 120) || newAvisos[0].title) : `${newAvisos[0].title} e mais ${newAvisos.length - 1}`,
     url: newAvisos[0].link || '/',
-    icon: 'https://esjf.edu.pt/assets/img/favicon-esjf.png',
+    icon: 'https://avisos-esjf.vercel.app/icon-192.png',
   });
 
   for (const sub of subs) {

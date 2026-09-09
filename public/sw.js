@@ -34,8 +34,8 @@ self.addEventListener('push', (event) => {
   if (!event.data) {
     event.waitUntil(self.registration.showNotification('Novo Aviso ESJF 🔔', {
       body: 'Há um novo aviso disponível na ESJF.',
-      icon: 'https://esjf.edu.pt/assets/img/favicon-esjf.png',
-      badge: 'https://esjf.edu.pt/assets/img/favicon-esjf.png',
+      icon: 'https://avisos-esjf.vercel.app/icon-192.png',
+      badge: 'https://avisos-esjf.vercel.app/icon-192.png',
       vibrate: [200, 100, 200],
       data: { url: '/' }
     }));
@@ -48,8 +48,8 @@ self.addEventListener('push', (event) => {
     const title = data.title || 'Novo Aviso ESJF 🔔';
     const options = {
       body: data.body || 'Há um novo aviso disponível.',
-      icon: data.icon || 'https://esjf.edu.pt/assets/img/favicon-esjf.png',
-      badge: data.badge || 'https://esjf.edu.pt/assets/img/favicon-esjf.png',
+      icon: data.icon || 'https://avisos-esjf.vercel.app/icon-192.png',
+      badge: data.badge || 'https://avisos-esjf.vercel.app/icon-192.png',
       data: { url: data.url || '/' },
       vibrate: [200, 100, 200],
       requireInteraction: false,
