@@ -184,9 +184,15 @@ export default function NotificationsPage({ subEmail, setSubEmail, subStatus, ha
 
       <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-6 flex flex-col gap-3">
         <h3 className="font-bold flex items-center gap-2 text-slate-800 dark:text-slate-100 text-sm">
-          <Hash className="w-4 h-4 text-indigo-500" /> Discord / Webhook (avançado)
+          <Hash className="w-4 h-4 text-indigo-500" /> Discord
         </h3>
-        <p className="text-xs text-slate-500 dark:text-slate-500">Para admins: configure <code>DISCORD_WEBHOOK_URL</code> ou <code>EMAIL_WEBHOOK_URL</code> no Vercel.</p>
+        <p className="text-sm text-slate-600 dark:text-slate-400">
+          Entre no servidor do Discord para receber os avisos no canal.
+        </p>
+        <a href="https://discord.gg/G7R65Ab8mF" target="_blank" rel="noreferrer" className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg font-medium text-sm bg-indigo-500 hover:bg-indigo-600 text-white transition-colors">
+          <Hash className="w-4 h-4" /> Entrar no Discord
+        </a>
+        <p className="text-xs text-slate-500 dark:text-slate-500">Para admins: <code>DISCORD_WEBHOOK_URL</code> ou <code>EMAIL_WEBHOOK_URL</code> no Vercel.</p>
       </div>
 
       <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-6">
