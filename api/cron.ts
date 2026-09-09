@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { getAvisos } from './lib/scraper.js';
-import { getNewAvisos, markAvisosAsSent, sendBroadcastEmails, sendTelegram, sendDiscord, sendWebPush, sendGenericWebhook } from './lib/notify.js';
+import { getAvisos } from '../lib/scraper.js';
+import { getNewAvisos, markAvisosAsSent, sendBroadcastEmails, sendTelegram, sendDiscord, sendWebPush, sendGenericWebhook } from '../lib/notify.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'GET' && req.method !== 'POST') {

@@ -50,7 +50,7 @@ app.post("/api/subscribe", async (req, res) => {
 
   // Rate limit
   const ip = (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || (req.headers['x-real-ip'] as string) || req.ip || 'unknown';
-  const { checkRateLimit, getUnsubscribeUrl } = await import("./api/lib/security.js");
+  const { checkRateLimit, getUnsubscribeUrl } = await import("./lib/security.js");
   const rl = await checkRateLimit(`subscribe:${ip}`, 5, 60_000);
   if (!rl.allowed) {
     res.setHeader('Retry-After', String(Math.ceil(rl.resetIn / 1000)));
@@ -159,7 +159,7 @@ app.all("/api/cron", async (req, res) => {
     }
   }
   try {
-    const { getNewAvisos, markAvisosAsSent, sendBroadcastEmails, sendTelegram, sendDiscord, sendWebPush, sendGenericWebhook } = await import("./api/lib/notify.js");
+    const { getNewAvisos, markAvisosAsSent, sendBroadcastEmails, sendTelegram, sendDiscord, sendWebPush, sendGenericWebhook } = await import("./lib/notify.js");
     const avisos = await getAvisos();
     if (!avisos || avisos.length === 0) return res.status(200).json({ ok: true, count: 0, message: 'Nenhum aviso encontrado' });
     const force = req.query.force === 'true' || req.query.force === '1';
@@ -195,14 +195,14 @@ app.get("/api/push/vapid", async (req, res) => {
 app.post("/api/push/subscribe", async (req, res) => {
   const sub = req.body;
   if (!sub || !sub.endpoint) return res.status(400).json({ error: 'Invalid subscription' });
-  const { addPushSubscription } = await import("./api/lib/store.js");
+  const { addPushSubscription } = await import("./lib/store.js");
   await addPushSubscription(sub);
   res.json({ success: true });
 });
 app.post("/api/push/unsubscribe", async (req, res) => {
   const { endpoint } = req.body;
   if (!endpoint) return res.status(400).json({ error: 'endpoint required' });
-  const { removePushSubscription } = await import("./api/lib/store.js");
+  const { removePushSubscription } = await import("./lib/store.js");
   await removePushSubscription(endpoint);
   res.json({ success: true });
 });

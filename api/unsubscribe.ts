@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { verifyUnsubscribeToken } from './lib/security.js';
+import { verifyUnsubscribeToken } from '../lib/security.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const emailRaw = (req.query.email as string) || (req.body?.email as string) || '';
