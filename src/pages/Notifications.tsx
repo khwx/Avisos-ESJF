@@ -160,22 +160,33 @@ export default function NotificationsPage({ subEmail, setSubEmail, subStatus, ha
             <MessageCircle className="w-5 h-5 text-sky-500" /> Telegram
           </h3>
           <p className="text-sm text-slate-600 dark:text-slate-400">
-            Receba avisos instantâneos no Telegram. Requer que o administrador configure <code>TELEGRAM_BOT_TOKEN</code> e <code>TELEGRAM_CHAT_ID</code> no Vercel. Depois o cron envia automaticamente.
+            Receba avisos instantâneos no canal do Telegram — funciona mesmo com o site fechado.
           </p>
-          <a href="https://t.me/BotFather" target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-sm font-medium text-sky-600 dark:text-sky-400 hover:underline">
-            Criar bot com @BotFather <ExternalLink className="w-4 h-4" />
+          <a href="https://t.me/Avisos_ESJF" target="_blank" rel="noreferrer" className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg font-medium text-sm bg-sky-500 hover:bg-sky-600 text-white transition-colors">
+            <MessageCircle className="w-4 h-4" /> Seguir canal @Avisos_ESJF
           </a>
+          <p className="text-xs text-slate-500 dark:text-slate-500">Novos avisos publicados auto pelo bot @Avisos_ESJF_bot.</p>
         </div>
 
         <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-6 flex flex-col gap-4">
           <h3 className="font-bold flex items-center gap-2 text-slate-800 dark:text-slate-100">
-            <Hash className="w-5 h-5 text-indigo-500" /> Discord / Webhook
+            <MessageCircle className="w-5 h-5 text-emerald-500" /> WhatsApp
           </h3>
           <p className="text-sm text-slate-600 dark:text-slate-400">
-            Configure <code>DISCORD_WEBHOOK_URL</code> ou <code>EMAIL_WEBHOOK_URL</code> (Make/Zapier) no Vercel para receber avisos no Discord ou encaminhar para WhatsApp Business via automação.
+            Siga o canal do WhatsApp para receber os avisos no telemóvel.
           </p>
-          <p className="text-xs text-slate-500 dark:text-slate-500">WhatsApp direto requer Twilio/Meta Business — use Telegram ou Make→WhatsApp.</p>
+          <a href="https://whatsapp.com/channel/0029VbB7yP4EwEkx8Gg2rX2y" target="_blank" rel="noreferrer" className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg font-medium text-sm bg-emerald-500 hover:bg-emerald-600 text-white transition-colors">
+            <MessageCircle className="w-4 h-4" /> Seguir canal WhatsApp
+          </a>
+          <p className="text-xs text-slate-500 dark:text-slate-500">Se o link estiver errado, envie-me o link de convite do canal que eu atualizo.</p>
         </div>
+      </div>
+
+      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-6 flex flex-col gap-3">
+        <h3 className="font-bold flex items-center gap-2 text-slate-800 dark:text-slate-100 text-sm">
+          <Hash className="w-4 h-4 text-indigo-500" /> Discord / Webhook (avançado)
+        </h3>
+        <p className="text-xs text-slate-500 dark:text-slate-500">Para admins: configure <code>DISCORD_WEBHOOK_URL</code> ou <code>EMAIL_WEBHOOK_URL</code> no Vercel.</p>
       </div>
 
       <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-6">

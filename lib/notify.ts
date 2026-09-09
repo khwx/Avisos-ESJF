@@ -127,9 +127,11 @@ export async function sendBroadcastEmails(newAvisos: Aviso[]): Promise<{ sent: n
     </div>
   `).join('');
 
+  // Subject sem emoji para melhor deliverability (emoji fica só no corpo)
   const subject = newAvisos.length === 1
-    ? `🔔 Novo aviso: ${newAvisos[0].title.slice(0, 60)}`
-    : `🔔 ${newAvisos.length} novos avisos — ESJF`;
+    ? `Novo aviso ESJF: ${newAvisos[0].title.slice(0, 60)}`
+    : `${newAvisos.length} novos avisos — ESJF`;
+  const textVersion = newAvisos.map(a => `${a.title}\n${a.category || 'Geral'} - ${a.date}\n${(a.content || '').slice(0, 300)}\nVer: ${a.link}`).join('\n\n---\n\n') + `\n\n--\nAvisos ESJF - Escola Secundaria Jose Falcao\nPara cancelar, responda a este email.`;
 
   // Send personalized per recipient (unsubscribe link com token único)
   let sent = 0;
@@ -159,6 +161,7 @@ export async function sendBroadcastEmails(newAvisos: Aviso[]): Promise<{ sent: n
           to: [to],
           subject,
           html,
+          text: textVersion,
           headers: {
             'List-Unsubscribe': `<${unsubscribeUrl}>`,
             'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
