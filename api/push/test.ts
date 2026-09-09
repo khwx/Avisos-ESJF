@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { getPushSubscriptions, removePushSubscription } from '../lib/store.js';
+import { getPushSubscriptions, removePushSubscription } from '../../lib/store.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const publicKey = process.env.VAPID_PUBLIC_KEY;
