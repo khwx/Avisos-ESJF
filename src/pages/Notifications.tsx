@@ -175,7 +175,7 @@ export default function NotificationsPage({ subEmail, setSubEmail, subStatus, ha
           <p className="text-sm text-slate-600 dark:text-slate-400">
             Siga o canal do WhatsApp para receber os avisos no telemóvel.
           </p>
-          <a href="https://whatsapp.com/channel/0029VbB7yP4EwEkx8Gg2rX2y" target="_blank" rel="noreferrer" className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg font-medium text-sm bg-emerald-500 hover:bg-emerald-600 text-white transition-colors">
+          <a href="https://whatsapp.com/channel/0029Vb9LBduEKyZPVvpx683R" target="_blank" rel="noreferrer" className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg font-medium text-sm bg-emerald-500 hover:bg-emerald-600 text-white transition-colors">
             <MessageCircle className="w-4 h-4" /> Seguir canal WhatsApp
           </a>
           <p className="text-xs text-slate-500 dark:text-slate-500">Se o link estiver errado, envie-me o link de convite do canal que eu atualizo.</p>
