@@ -83,28 +83,28 @@ Obrigatórias: `RESEND_API_KEY`, `RESEND_AUDIENCE_ID`, `EMAIL_FROM` (`Avisos ESJ
 Opcional: `ADMIN_EMAIL`, `EMAIL_WEBHOOK_URL`, `GEMINI_API_KEY`.
 Após mudar vars → **Redeploy** (as functions só leem as novas no próximo deploy).
 
-## 7. WhatsApp via Hermes (OpenCode MCP) — PREENCHER
+## 7. WhatsApp via Hermes (OpenCode MCP) — AUTÓNOMO ✅
 
-O envio WhatsApp **não** passa pelo Vercel. É feito pelo agente Hermes
-(OpenCode + MCP de WhatsApp via Baileys/WhatsApp Web) a partir da máquina local.
+O envio WhatsApp **não** passa pelo Vercel. É o agente **Hermes** que trata,
+em piloto automático (confirmado com ele em 2026-09-10).
 
-- Destinos (preencher com os IDs reais):
-  - Canal WhatsApp: `https://whatsapp.com/channel/0029Vb9LBduEKyZPVvpx683R` (link público OK)
-  - Grupo WhatsApp: _(pedir ID ao Hermes: `conversations_list` / `channels_list`)_
-  - Canal ID interno: _(ex: `...@newsletter`)_ · Grupo ID interno: _(ex: `...@g.us`)_
-- Formato da mensagem: título + categoria/data + resumo curto + link do aviso original.
-- Regras anti-duplicados:
-  - Só enviar avisos com `pubDate`/`guid` ainda não publicados no canal (confirmar com `messages_read` antes de enviar);
+- **Quem envia:** Hermes, via script `publicar_avisos.py` corrido pela `cronjob`
+  (de hora a hora) no ambiente persistente `gateway`.
+- **Como decide:** lê o RSS, compara com o ficheiro de cache `avisos_vistos.txt`
+  (histórico do já enviado) e envia **só as novidades** para o canal + grupo.
+- **Destinos:**
+  - Canal WhatsApp: `https://whatsapp.com/channel/0029Vb9LBduEKyZPVvpx683R`
+  - Grupo WhatsApp: gerido pelo Hermes (ID interno por confirmar se preciso).
+- **Após desligar/ligar:** o `gateway` arranca sozinho (instalado como serviço),
+  a `cronjob` retoma o ciclo horário e o histórico em `avisos_vistos.txt` não se perde.
+  Se após reboot prolongado parar: ligar o gateway (`hermes gateway start`) e a cronjob trata do resto.
+- **Fonte recomendada:** o feed oficial `https://esjf.edu.pt/feed.php` com
+  deduplicação por `guid` (estável; não usar só título/data).
+- **Regras anti-duplicados:**
   - Nunca reenviar histórico em massa — o canal já tem subscritores;
-  - Testes com `force` no Vercel NÃO tocam no WhatsApp (só email/Telegram/Discord/Push).
-- Auto-start do Hermes (máquina local): garantir que o gateway/MCP arranca no boot
-  (systemd/pm2/Task Scheduler — ver secção 2) **e** que a sessão WhatsApp Web está
-  persistida (`wa_auth/` ou equivalente) para não pedir QR Code a cada reboot.
-- Perguntas para fazer ao Hermes e colar aqui a resposta:
-  1. `channels_list` — que canais/grupos de WhatsApp tens?
-  2. IDs internos do canal e do grupo dos Avisos ESJF?
-  3. A sessão está persistida onde? Precisa QR após reboot?
-  4. Como arrancas (comando/serviço)?
+  - Testes `?force=true` no Vercel NÃO tocam no WhatsApp (só email/Telegram/Discord/Push);
+  - Vercel e Hermes são independentes: cada um tem o seu estado
+    (Upstash `avisos:lastIds` vs `avisos_vistos.txt`). Não apagar nenhum dos dois.
 
 ## 8. Segredos
 
