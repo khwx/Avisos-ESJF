@@ -65,6 +65,17 @@ export async function setLastSentIds(ids: string[]): Promise<void> {
   } catch {}
 }
 
+// ---- ID scheme (migração silenciosa quando o formato de IDs muda) ----
+export async function getIdScheme(): Promise<string | null> {
+  const upstashVal = await upstashGet('avisos:idScheme');
+  if (upstashVal) return upstashVal;
+  return null;
+}
+
+export async function setIdScheme(scheme: string): Promise<void> {
+  await upstashSet('avisos:idScheme', scheme);
+}
+
 // ---- Push Subscriptions ----
 export async function getPushSubscriptions(): Promise<any[]> {
   const upstashVal = await upstashGet('avisos:pushSubs');

@@ -1,4 +1,7 @@
-import { getLastSentIds, setLastSentIds, getPushSubscriptions } from './store.js';
+import { getLastSentIds, setLastSentIds, getPushSubscriptions, getIdScheme, setIdScheme } from './store.js';
+
+// Esquema atual de IDs: guid do feed oficial (antes: titulo+data do HTML)
+const CURRENT_ID_SCHEME = 'guid-v1';
 import { getUnsubscribeUrl } from './security.js';
 
 export interface Aviso {
@@ -36,6 +39,15 @@ export function isAvisoToday(aviso: Aviso): boolean {
 
 export async function getNewAvisos(allAvisos: Aviso[]): Promise<Aviso[]> {
   if (!allAvisos.length) return [];
+
+  // Migração silenciosa de esquema de IDs (evita reenviar tudo ao mudar de fonte)
+  const scheme = await getIdScheme();
+  if (scheme !== CURRENT_ID_SCHEME) {
+    await setLastSentIds(allAvisos.map(a => a.id));
+    await setIdScheme(CURRENT_ID_SCHEME);
+    return [];
+  }
+
   const lastIds = await getLastSentIds();
 
   // If we have no history, we don't know what's new — treat none as new on first run
