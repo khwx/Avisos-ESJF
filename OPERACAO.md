@@ -83,7 +83,30 @@ Obrigatórias: `RESEND_API_KEY`, `RESEND_AUDIENCE_ID`, `EMAIL_FROM` (`Avisos ESJ
 Opcional: `ADMIN_EMAIL`, `EMAIL_WEBHOOK_URL`, `GEMINI_API_KEY`.
 Após mudar vars → **Redeploy** (as functions só leem as novas no próximo deploy).
 
-## 7. Segredos
+## 7. WhatsApp via Hermes (OpenCode MCP) — PREENCHER
+
+O envio WhatsApp **não** passa pelo Vercel. É feito pelo agente Hermes
+(OpenCode + MCP de WhatsApp via Baileys/WhatsApp Web) a partir da máquina local.
+
+- Destinos (preencher com os IDs reais):
+  - Canal WhatsApp: `https://whatsapp.com/channel/0029Vb9LBduEKyZPVvpx683R` (link público OK)
+  - Grupo WhatsApp: _(pedir ID ao Hermes: `conversations_list` / `channels_list`)_
+  - Canal ID interno: _(ex: `...@newsletter`)_ · Grupo ID interno: _(ex: `...@g.us`)_
+- Formato da mensagem: título + categoria/data + resumo curto + link do aviso original.
+- Regras anti-duplicados:
+  - Só enviar avisos com `pubDate`/`guid` ainda não publicados no canal (confirmar com `messages_read` antes de enviar);
+  - Nunca reenviar histórico em massa — o canal já tem subscritores;
+  - Testes com `force` no Vercel NÃO tocam no WhatsApp (só email/Telegram/Discord/Push).
+- Auto-start do Hermes (máquina local): garantir que o gateway/MCP arranca no boot
+  (systemd/pm2/Task Scheduler — ver secção 2) **e** que a sessão WhatsApp Web está
+  persistida (`wa_auth/` ou equivalente) para não pedir QR Code a cada reboot.
+- Perguntas para fazer ao Hermes e colar aqui a resposta:
+  1. `channels_list` — que canais/grupos de WhatsApp tens?
+  2. IDs internos do canal e do grupo dos Avisos ESJF?
+  3. A sessão está persistida onde? Precisa QR após reboot?
+  4. Como arrancas (comando/serviço)?
+
+## 8. Segredos
 
 Nunca partilhar em chats: `CRON_SECRET`, tokens Vercel/Resend/Telegram/Upstash, webhook Discord.
 Se algum vazar: revogar e gerar novo (Vercel Tokens, Resend API keys, @BotFather `/revoke`,
